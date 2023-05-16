@@ -69,8 +69,11 @@ class Graph:
                         print(self.nxG.edges)
                         print(self.lines)
                         im.delete_figure(i.arrow_mid)
-                        im.delete_figure(i.arrow_left)
-                        im.delete_figure(i.arrow_right)
+                        try:
+                            im.delete_figure(i.arrow_left)
+                            im.delete_figure(i.arrow_right)
+                        except:
+                            print('completed edge')
                         self.nxG.remove_edge(edge[0],edge[1])
                         #try:
                         #  self.nxG.remove_edge(self.lines[i.start],self.lines[i.end])
@@ -82,6 +85,11 @@ class Graph:
 
         print("full", self.nxG.edges)
         print("new", new_graph.edges)
+    def complete(self, graph):
+        for first in self.nxG.nodes:
+            for second in self.nxG.nodes:
+                if (first, second) not in self.nxG.edges and (second, first) not in self.nxG.edges:
+                    self.add_lines(self.nodes.index(first),self.nodes.index(second),graph.draw_line(first.center, second.center, width=4),"","")
 
 
 
@@ -124,6 +132,7 @@ def main():
            # [sg.R('Draw points', 1,  key='-POINT-', enable_events=True)],
            #[sg.R('Erase item', 1, key='-ERASE-', enable_events=True)],
            [sg.R('Erase all', 1, key='-CLEAR-', enable_events=True)],
+           [sg.Button('Complete graph', key='-COM-')],
            [sg.Text('Path_length: '), sg.Text('0.0', key='-CUR-')],
            #[sg.Text('Solution', key="-SOL-")]
            #[sg.R('Send to back', 1, key='-BACK-', enable_events=True)],
@@ -185,6 +194,8 @@ def main():
             window["-MAXT-"].update(100)
             window["-MINT-"].update(0)
             window["-STEP-"].update(5)
+        if event == "-COM-":
+            G.complete(graph)
         if event == "-GRAPH-":  # if there's a "Graph" event, then it's a mouse
             x, y = values["-GRAPH-"]
             if not dragging:
@@ -266,6 +277,7 @@ def main():
                                                                math.tan(math.atan(k) - math.pi / 6), start_point,
                                                                end_point), width=4)
                 #print(G.weight(G.nodes[startflag].center, G.nodes[endflag].center))
+                print(startflag, endflag, start_point, end_point)
                 G.add_lines(startflag, endflag, prior_mid, prior_left, prior_right)
                 startflag = -1
                 endflag = -1
