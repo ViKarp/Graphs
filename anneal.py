@@ -2,13 +2,21 @@ from copy import deepcopy
 from math import exp
 
 import networkx as nx
-import anneal_common
 import random
+
+default_args = {'max_t': 100, 'min_t': 0, 'step': 5}
+args = deepcopy(default_args)
+
+
+def reset_args():
+    global args
+    args = deepcopy(default_args)
+
 
 # Для начального решения будем использовать алгоритм ближайшего соседа,
 # т.к. это проще и дешевле, чем искать случайный цикл
 # Алгоритм ближайшего соседа
-def nna(graph:nx.Graph, start_v):
+def nna(graph: nx.Graph, start_v):
     # Определяем объекты, которые будем возвращать
     out_graph = nx.DiGraph()
     path_len = 0
@@ -58,6 +66,7 @@ def nna(graph:nx.Graph, start_v):
             return out_graph, 0
     return out_graph, path_len
 
+
 # Случай когда случайные два ребра соединены
 def dependent_case(graph: nx.Graph, sol: nx.DiGraph, first, a, b, last, temp):
     # Проверяем есть ли ребра
@@ -79,6 +88,7 @@ def dependent_case(graph: nx.Graph, sol: nx.DiGraph, first, a, b, last, temp):
             sol.remove_edge(b, last)
             return delta
     return 0
+
 
 # Случай когда случайные два ребра не соединены
 def independent_case(graph: nx.Graph, sol: nx.DiGraph, a1, a, a2, b1, b, b2, temp):
@@ -107,15 +117,16 @@ def independent_case(graph: nx.Graph, sol: nx.DiGraph, a1, a, a2, b1, b, b2, tem
             return delta
     return 0
 
+
 # Алгоритм имитации отжига
 def anneal(graph: nx.Graph):
-        # Строим начальное решение
-    current_solution, current_len = nna(graph, list(graph.nodes)[(random.randint(0, len(graph.nodes)-1))])
-        # Если не нашли решение или в графе 3 вершины - ничего не изменяем
+    # Строим начальное решение
+    current_solution, current_len = nna(graph, list(graph.nodes)[(random.randint(0, len(graph.nodes) - 1))])
+    # Если не нашли решение или в графе 3 вершины - ничего не изменяем
     if current_len == 0 or len(graph.nodes) == 3:
         return current_solution, current_len
     # Считываем параметры
-    max_t, min_t, step = anneal_common.args.values()
+    max_t, min_t, step = args.values()
     current_t = max_t
     # Пока температура не упала до минимальной
     while current_t > min_t:
@@ -124,7 +135,7 @@ def anneal(graph: nx.Graph):
         # Определяем инцидентные им ребра
         to_a = list(current_solution.in_edges(a, data=True))[0]
         from_a = list(current_solution.out_edges(a, data=True))[0]
-        to_b= list(current_solution.in_edges(b, data=True))[0]
+        to_b = list(current_solution.in_edges(b, data=True))[0]
         from_b = list(current_solution.out_edges(b, data=True))[0]
         # Если есть совпадающие ребра, запускаем зависимый случай
         if to_b[0] == a:
@@ -133,7 +144,8 @@ def anneal(graph: nx.Graph):
             current_len -= dependent_case(graph, current_solution, to_b[0], b, a, from_a[1], current_t)
         # Нет совпадающих ребер - независимый случай
         else:
-            current_len -= independent_case(graph, current_solution, to_a[0], a, from_a[1], to_b[0], b, from_b[1], current_t)
+            current_len -= independent_case(graph, current_solution, to_a[0], a, from_a[1], to_b[0], b, from_b[1],
+                                            current_t)
         # Уменьшаем температуру
         current_t -= step
     # Возвращаем решение
